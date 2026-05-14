@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check } from "lucide-react";
+import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 import hoodie from "@/assets/hoodie.jpg";
 import slipon from "@/assets/slipon.jpg";
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "FashionHero — Seller Growth Insights" },
-      { name: "description", content: "Wglad w widocznosc, wejscia, zamowienia i wynik po prowizji. Zdecyduj, ktory produkt warto promowac." },
+      { name: "description", content: "Wgląd w widoczność, wejścia, zamówienia i wynik po prowizji. Zdecyduj, który produkt warto promować." },
     ],
   }),
 });
@@ -29,6 +29,10 @@ type Product = {
   price: number;
   benchmark: number;
   netResult: number;
+  stock: number;
+  avgBasket: number;
+  searchRank: number;
+  wishlist: number;
   status: Status;
   statusLabel: string;
   ctaActive: boolean;
@@ -49,14 +53,19 @@ const products: Product[] = [
     price: 149,
     benchmark: 139,
     netResult: 81,
+    stock: 24,
+    avgBasket: 168,
+    searchRank: 38,
+    wishlist: 3,
     status: "weak",
-    statusLabel: "Slaba konwersja",
+    statusLabel: "Słaba konwersja",
     ctaActive: true,
     trend: [3, 5, 4, 6, 8, 7, 9],
     evidence: [
-      "Niska liczba wejsc przy 120 wyswietleniach — zdjecie lub tytul nie przyciagaja kliku.",
-      "Cena 10 PLN powyzej benchmarku kategorii.",
-      "Boost moze odpowiedziec na pytanie, czy problem jest w widocznosci czy w ofercie.",
+      "Niska liczba wejść przy 120 wyświetleniach — zdjęcie lub tytuł nie przyciągają kliknięcia.",
+      "Cena 10 PLN powyżej benchmarku kategorii.",
+      "Pozycja 38 w wyszukiwarce — produkt znika z pierwszej strony wyników.",
+      "Boost odpowie na pytanie, czy problem jest w widoczności, czy w samej ofercie.",
     ],
   },
   {
@@ -71,14 +80,19 @@ const products: Product[] = [
     price: 189,
     benchmark: 199,
     netResult: 103,
+    stock: 142,
+    avgBasket: 224,
+    searchRank: 6,
+    wishlist: 47,
     status: "good",
     statusLabel: "Dobry kandydat",
     ctaActive: true,
     trend: [40, 55, 62, 70, 88, 95, 110],
     evidence: [
-      "Stabilny lejek: 11% z wyswietlen wchodzi w karte, 19% z wejsc kupuje.",
-      "Cena 10 PLN ponizej benchmarku — przewaga w wynikach.",
-      "Niski poziom zwrotow (8%) — boost nie podniesie kosztow obslugi.",
+      "Stabilny lejek: 11% z wyświetleń wchodzi w kartę, 19% z wejść kupuje.",
+      "Cena 10 PLN poniżej benchmarku — przewaga w wynikach wyszukiwania.",
+      "Niski poziom zwrotów (8%) — boost nie podniesie kosztów obsługi.",
+      "47 osób dodało do listy życzeń — rozgrzany popyt czeka na impuls.",
     ],
   },
   {
@@ -93,14 +107,19 @@ const products: Product[] = [
     price: 159,
     benchmark: 145,
     netResult: 34,
+    stock: 9,
+    avgBasket: 159,
+    searchRank: 14,
+    wishlist: 11,
     status: "bad",
     statusLabel: "Nie promuj teraz",
     ctaActive: false,
     trend: [80, 75, 60, 55, 48, 40, 38],
     evidence: [
-      "Zwroty 31% — boost zwiekszy koszty obslugi i strate.",
-      "Wynik po prowizji 34 PLN — mala marza na pokrycie reklamy.",
-      "Najpierw popraw opis rozmiarowki, potem rozwaz boost.",
+      "Zwroty 31% — boost zwiększy koszty obsługi i stratę.",
+      "Wynik po prowizji 34 PLN — mała marża na pokrycie reklamy.",
+      "Stan magazynu 9 sztuk — promocja może wyczerpać zapas w 2 dni.",
+      "Najpierw popraw opis rozmiarówki, potem rozważ boost.",
     ],
   },
 ];
@@ -108,7 +127,7 @@ const products: Product[] = [
 function Topbar() {
   return (
     <div className="bg-ink text-white text-xs tracking-wide text-center py-2.5 px-4">
-      Free Shipping on Orders over 299 zl — Easy Returns.
+      Darmowa dostawa od 299 zł — łatwe zwroty w 30 dni.
     </div>
   );
 }
@@ -120,14 +139,14 @@ function Nav() {
         <div className="flex items-center gap-10">
           <a href="/" className="font-display italic text-2xl tracking-tight text-ink">FashionHero</a>
           <ul className="hidden md:flex items-center gap-7 text-[13px] font-medium tracking-wide text-ink">
-            <li><a href="#">MEN</a></li>
-            <li><a href="#">WOMEN</a></li>
-            <li><a href="#">SALE</a></li>
-            <li><a href="#">NEW</a></li>
+            <li><a href="#">MĘŻCZYŹNI</a></li>
+            <li><a href="#">KOBIETY</a></li>
+            <li><a href="#">WYPRZEDAŻ</a></li>
+            <li><a href="#">NOWOŚCI</a></li>
           </ul>
         </div>
         <div className="flex items-center gap-5 text-ink">
-          <a href="#" className="hidden md:inline text-[13px]">About</a>
+          <a href="#how" className="hidden md:inline text-[13px]">Jak to działa</a>
           <Search className="w-[18px] h-[18px]" />
           <Heart className="w-[18px] h-[18px]" />
           <User className="w-[18px] h-[18px]" />
@@ -143,20 +162,20 @@ function Hero() {
     <section className="relative bg-beige-deep">
       <div className="max-w-[1400px] mx-auto grid lg:grid-cols-2 gap-0 items-stretch">
         <div className="px-6 lg:px-12 py-16 lg:py-28 flex flex-col justify-center">
-          <p className="text-[11px] tracking-[0.2em] uppercase text-ink/60 mb-6">Growth Insights — dla sellerow</p>
+          <p className="text-[11px] tracking-[0.2em] uppercase text-ink/60 mb-6">Growth Insights — dla sprzedawców</p>
           <h1 className="font-display text-5xl lg:text-6xl leading-[1.05] text-ink mb-6">
-            Wiedz co promowac,<br/>zanim zaplacisz.
+            Wiedz co promować,<br/>zanim zapłacisz.
           </h1>
           <p className="text-base text-ink/70 max-w-md leading-relaxed">
-            Growth Insights pokazuje widocznosc, wejscia, zamowienia, zwroty, benchmark ceny i szacowany wynik po prowizji. Decyduj na podstawie danych, nie przeczucia.
+            Growth Insights pokazuje widoczność, wejścia, zamówienia, zwroty, benchmark ceny i szacowany wynik po prowizji. Decyduj na podstawie danych, nie przeczucia.
           </p>
           <div className="mt-10 flex gap-3">
             <a href="#insights" className="bg-ink text-white text-[12px] tracking-[0.15em] uppercase px-7 py-4">Zobacz statystyki</a>
-            <a href="#insights" className="border border-ink text-ink text-[12px] tracking-[0.15em] uppercase px-7 py-4">Jak to dziala</a>
+            <a href="#how" className="border border-ink text-ink text-[12px] tracking-[0.15em] uppercase px-7 py-4">Jak to działa</a>
           </div>
         </div>
         <div className="relative min-h-[420px] lg:min-h-[640px]">
-          <img src={hero} alt="Seller fashion" className="absolute inset-0 w-full h-full object-cover" width={1600} height={1024} />
+          <img src={hero} alt="Sprzedawca mody" className="absolute inset-0 w-full h-full object-cover" width={1600} height={1024} />
         </div>
       </div>
     </section>
@@ -196,8 +215,8 @@ function ProductCard({ p, selected, onSelect }: { p: Product; selected: boolean;
           <span className={`text-[10px] tracking-[0.1em] uppercase px-2.5 py-1 ${statusStyles[p.status]}`}>{p.statusLabel}</span>
         </div>
         <div className="grid grid-cols-4 gap-3 mt-5 pt-5 border-t border-black/10">
-          <Stat label="Wysw." value={p.views} />
-          <Stat label="Wejs." value={p.visits} />
+          <Stat label="Wyśw." value={p.views} />
+          <Stat label="Wejś." value={p.visits} />
           <Stat label="Zam." value={p.orders} />
           <Stat label="Zwr." value={`${p.returns}%`} />
         </div>
@@ -221,7 +240,7 @@ function TrendChart({ data }: { data: number[] }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] tracking-[0.15em] uppercase text-ink/50">Trend 7 dni — wejscia</span>
+        <span className="text-[10px] tracking-[0.15em] uppercase text-ink/50">Trend 7 dni — wejścia</span>
         <span className="text-[11px] text-ink/60 inline-flex items-center gap-1">
           {trendUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
           {data[0]} → {data[data.length - 1]}
@@ -239,12 +258,29 @@ function TrendChart({ data }: { data: number[] }) {
   );
 }
 
+function MetricTile({ icon: Icon, label, value, hint }: { icon: typeof Eye; label: string; value: string; hint?: string }) {
+  return (
+    <div className="border border-black/10 p-4">
+      <div className="flex items-center gap-2 text-ink/55">
+        <Icon className="w-3.5 h-3.5" />
+        <span className="text-[10px] tracking-[0.15em] uppercase">{label}</span>
+      </div>
+      <div className="font-display text-2xl text-ink mt-2">{value}</div>
+      {hint && <div className="text-[12px] text-ink/55 mt-1">{hint}</div>}
+    </div>
+  );
+}
+
 function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boosted: boolean }) {
   const priceDiff = p.price - p.benchmark;
   const priceUp = priceDiff > 0;
+  const ctr = ((p.visits / p.views) * 100).toFixed(1);
+  const conv = p.visits > 0 ? ((p.orders / p.visits) * 100).toFixed(1) : "0.0";
+  const revenue = p.orders * p.netResult;
+
   return (
     <div className="bg-white p-8 lg:p-10 border border-black/10">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
           <p className="text-[11px] tracking-[0.2em] uppercase text-ink/50">Wybrany produkt</p>
           <h3 className="font-display text-3xl text-ink mt-1">{p.name}</h3>
@@ -253,32 +289,15 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
         <span className={`text-[10px] tracking-[0.1em] uppercase px-3 py-1.5 ${statusStyles[p.status]}`}>{p.statusLabel}</span>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pb-8 border-b border-black/10">
-        <div>
-          <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50">Benchmark ceny</div>
-          <div className="font-display text-2xl text-ink mt-1">{p.price} PLN</div>
-          <div className={`text-[12px] mt-1 inline-flex items-center gap-1 ${priceUp ? "text-ink/80" : "text-ink/60"}`}>
-            {priceUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-            vs {p.benchmark} PLN ({priceUp ? "+" : ""}{priceDiff} PLN)
-          </div>
-        </div>
-        <div>
-          <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50">Wynik po prowizji</div>
-          <div className="font-display text-2xl text-ink mt-1">{p.netResult} PLN</div>
-          <div className="text-[12px] text-ink/55 mt-1">na sprzedana sztuke</div>
-        </div>
-        <div>
-          <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50">Wejscia / 7 dni</div>
-          <div className="font-display text-2xl text-ink mt-1">{p.visits}</div>
-          <div className="text-[12px] text-ink/55 mt-1">{((p.visits / p.views) * 100).toFixed(1)}% z wyswietlen</div>
-        </div>
-        <div>
-          <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50">Zwroty</div>
-          <div className="font-display text-2xl text-ink mt-1">{p.returns}%</div>
-          <div className="text-[12px] text-ink/55 mt-1">
-            {p.returns < 15 ? "w normie" : "powyzej normy"}
-          </div>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pb-8 border-b border-black/10">
+        <MetricTile icon={Eye} label="Wyświetlenia" value={p.views.toString()} hint="ostatnie 7 dni" />
+        <MetricTile icon={MousePointerClick} label="Wejścia w kartę" value={p.visits.toString()} hint={`CTR ${ctr}%`} />
+        <MetricTile icon={ShoppingCart} label="Zamówienia" value={p.orders.toString()} hint={`konwersja ${conv}%`} />
+        <MetricTile icon={RotateCcw} label="Zwroty" value={`${p.returns}%`} hint={p.returns < 15 ? "w normie" : "powyżej normy"} />
+        <MetricTile icon={Tag} label="Cena" value={`${p.price} PLN`} hint={`benchmark ${p.benchmark} PLN (${priceUp ? "+" : ""}${priceDiff})`} />
+        <MetricTile icon={Wallet} label="Wynik po prowizji" value={`${p.netResult} PLN`} hint={`przychód 7 dni: ${revenue} PLN`} />
+        <MetricTile icon={Package} label="Stan magazynu" value={p.stock.toString()} hint={p.stock < 20 ? "niski zapas" : "wystarczający"} />
+        <MetricTile icon={Target} label="Pozycja w wyszukiwarce" value={`#${p.searchRank}`} hint={`lista życzeń: ${p.wishlist}`} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-10 py-8 border-b border-black/10">
@@ -286,7 +305,7 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
           <TrendChart data={p.trend} />
         </div>
         <div>
-          <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50 mb-3">Co mowia dane</div>
+          <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50 mb-3">Co mówią dane</div>
           <ul className="space-y-2.5">
             {p.evidence.map((e, i) => (
               <li key={i} className="flex gap-3 text-sm text-ink/75 leading-relaxed">
@@ -306,9 +325,9 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
                 <Check className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-display text-lg text-ink">Zapisano sygnal testowy.</p>
+                <p className="font-display text-lg text-ink">Zapisano sygnał testowy.</p>
                 <p className="text-sm text-ink/65 mt-1">
-                  To nie uruchamia prawdziwej platnosci ani reklamy. Twoja decyzja zostala zarejestrowana na potrzeby testu.
+                  To nie uruchamia prawdziwej płatności ani reklamy. Twoja decyzja została zarejestrowana wyłącznie na potrzeby testu produktowego.
                 </p>
               </div>
             </div>
@@ -319,7 +338,7 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
               <p className="text-[11px] tracking-[0.2em] uppercase text-ink/50">Test boosta</p>
               <p className="text-sm text-ink/70 mt-1">
                 {p.ctaActive
-                  ? "Maly platny test, aby sprawdzic czy boost zmienia lejek tego produktu."
+                  ? "Mały płatny test, aby sprawdzić czy boost zmienia lejek tego produktu."
                   : "Ten produkt nie jest dobrym kandydatem do promocji w tym tygodniu."}
               </p>
             </div>
@@ -338,6 +357,58 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
         )}
       </div>
     </div>
+  );
+}
+
+function HowItWorks() {
+  const steps = [
+    {
+      n: "01",
+      title: "Zbieramy sygnały",
+      body: "Co noc agregujemy wyświetlenia, wejścia w kartę, zamówienia, zwroty, ceny konkurencji, stan magazynu i pozycję w wyszukiwarce FashionHero.",
+    },
+    {
+      n: "02",
+      title: "Liczymy lejek i wynik",
+      body: "Z surowych liczb wyliczamy CTR, konwersję, średni koszyk i wynik po prowizji marketplace. Porównujemy do benchmarku Twojej kategorii.",
+    },
+    {
+      n: "03",
+      title: "Rekomendujemy decyzję",
+      body: "Każdy produkt dostaje status: dobry kandydat do boosta, słaba konwersja do poprawy lub nie promuj teraz. Zawsze z uzasadnieniem opartym na danych.",
+    },
+    {
+      n: "04",
+      title: "Uruchamiasz mikro-test",
+      body: "Boost za 50 PLN to 48-godzinny test widoczności. Po nim wracamy z porównaniem lejka przed i po — bez długich kampanii w ciemno.",
+    },
+  ];
+  return (
+    <section id="how" className="bg-white py-20 lg:py-28 border-t border-black/5">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+        <div className="grid lg:grid-cols-12 gap-10 mb-14">
+          <div className="lg:col-span-5">
+            <p className="text-[11px] tracking-[0.2em] uppercase text-ink/50 mb-3">Jak to działa</p>
+            <h2 className="font-display text-4xl lg:text-5xl text-ink leading-tight">Cztery kroki od liczby do decyzji.</h2>
+          </div>
+          <p className="lg:col-span-7 text-base text-ink/70 leading-relaxed lg:pt-12">
+            Growth Insights nie zastępuje Twojej intuicji jako sprzedawcy — daje jej kontekst. Zamiast zgadywać, który produkt warto rozkręcić, widzisz cały lejek w jednym miejscu i testujesz hipotezy małymi krokami.
+          </p>
+        </div>
+        <ol className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-black/10 border border-black/10">
+          {steps.map((s) => (
+            <li key={s.n} className="bg-white p-7 flex flex-col">
+              <span className="font-display text-3xl text-ink/30">{s.n}</span>
+              <h3 className="font-display text-xl text-ink mt-6">{s.title}</h3>
+              <p className="text-sm text-ink/65 mt-3 leading-relaxed">{s.body}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="text-[12px] text-ink/50 mt-8 max-w-2xl">
+          Prototyp testowy. Liczby na stronie są przykładowe, a przycisk boosta nie pobiera prawdziwej płatności ani nie uruchamia reklamy — służy do walidacji koncepcji z sellerami.
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -370,7 +441,7 @@ function Index() {
               <p className="text-[11px] tracking-[0.2em] uppercase text-ink/50 mb-3">Growth Insights</p>
               <h2 className="font-display text-4xl lg:text-5xl text-ink leading-tight">Twoje produkty w tym tygodniu</h2>
             </div>
-            <p className="text-sm text-ink/55 max-w-xs">Klikaj produkty, aby zobaczyc szczegoly i decyzje, ktora rekomendujemy.</p>
+            <p className="text-sm text-ink/55 max-w-xs">Klikaj produkty, aby zobaczyć szczegóły i decyzję, którą rekomendujemy.</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -387,10 +458,12 @@ function Index() {
         </div>
       </section>
 
+      <HowItWorks />
+
       <footer className="bg-ink text-white/70 py-10">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex flex-wrap items-center justify-between gap-4 text-[12px] tracking-wide">
           <span className="font-display italic text-white text-lg">FashionHero</span>
-          <span>Prototyp testowy — Seller Growth Insights. Brak prawdziwych platnosci.</span>
+          <span>Prototyp testowy — Seller Growth Insights. Brak prawdziwych płatności.</span>
         </div>
       </footer>
     </div>
