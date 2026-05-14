@@ -142,7 +142,7 @@ const products: Product[] = [
       "Najpierw popraw opis rozmiarówki, potem rozważ boost.",
     ],
     fixes: [
-      "Przepisz opis rozmiarówki — wskaż „dobierz rozmiar w górę".",
+      "Przepisz opis rozmiarówki — wskaż „dobierz rozmiar w górę”.",
       "Dodaj zdjęcie boczne stopy — pokaż realną szerokość.",
       "Uzupełnij stan magazynu zanim rozważysz promocję.",
     ],
