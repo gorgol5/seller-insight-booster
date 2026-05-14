@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target, AlertTriangle, Wrench } from "lucide-react";
+import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target, AlertTriangle } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 import hoodie from "@/assets/hoodie.jpg";
 import slipon from "@/assets/slipon.jpg";
@@ -160,7 +160,7 @@ const segments: { id: Segment; label: string }[] = [
 function Topbar() {
   return (
     <div className="bg-ink text-white text-xs tracking-wide text-center py-2.5 px-4">
-      Darmowa dostawa od 299 zł — łatwe zwroty w 30 dni.
+      Free Shipping on Orders over 299 zl - Easy Returns.
     </div>
   );
 }
@@ -172,14 +172,14 @@ function Nav() {
         <div className="flex items-center gap-10">
           <a href="/" className="font-display italic text-2xl tracking-tight text-ink">FashionHero</a>
           <ul className="hidden md:flex items-center gap-7 text-[13px] font-medium tracking-wide text-ink">
-            <li><a href="#">MĘŻCZYŹNI</a></li>
-            <li><a href="#">KOBIETY</a></li>
-            <li><a href="#">WYPRZEDAŻ</a></li>
-            <li><a href="#">NOWOŚCI</a></li>
+            <li><a href="#">MEN</a></li>
+            <li><a href="#">WOMEN</a></li>
+            <li><a href="#">SALE</a></li>
+            <li><a href="#">NEW</a></li>
           </ul>
         </div>
         <div className="flex items-center gap-5 text-ink">
-          <a href="#how" className="hidden md:inline text-[13px]">Jak to działa</a>
+          <a href="#how" className="hidden md:inline text-[13px]">About</a>
           <Search className="w-[18px] h-[18px]" />
           <Heart className="w-[18px] h-[18px]" />
           <User className="w-[18px] h-[18px]" />
@@ -272,30 +272,46 @@ function TrendChart({ data, categoryAvg, projected }: { data: number[]; category
   }).join(" ");
   const trendUp = data[data.length - 1] > data[0];
   return (
-    <div>
+    <div className={projected ? "border border-ink/20 bg-white p-5" : ""}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] tracking-[0.15em] uppercase text-ink/50">Trend 7 dni — wejścia</span>
-        <span className="text-[11px] text-ink/60 inline-flex items-center gap-1">
+        <div>
+          <span className="text-[10px] tracking-[0.15em] uppercase text-ink/50">Trend 7 dni — wejścia</span>
+          {projected && (
+            <div className="mt-2 inline-flex items-center gap-2 bg-[#0c7c59] text-white px-3 py-1 text-[10px] tracking-[0.12em] uppercase">
+              <TrendingUp className="w-3 h-3" />
+              Prognoza po booście
+            </div>
+          )}
+        </div>
+        <span className="text-[11px] text-ink/60 inline-flex items-center gap-1 justify-end">
           {trendUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-          {data[0]} → {data[data.length - 1]}
+          obecnie: {data[0]} → {data[data.length - 1]}
         </span>
       </div>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-20">
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-24">
         <polyline fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" points={toPoints(categoryAvg)} className="text-ink/30" />
-        <polyline fill="none" stroke="currentColor" strokeWidth="1.5" points={toPoints(data)} className="text-ink" />
+        <polyline fill="none" stroke="currentColor" strokeWidth="2" points={toPoints(data)} className="text-ink" />
         {data.map((v, i) => {
           const x = (i / (data.length - 1)) * w;
           const y = h - ((v - min) / range) * h;
           return <circle key={i} cx={x} cy={y} r="2" className="fill-ink" />;
         })}
         {projected && (
-          <polyline fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 3" points={toPoints(projected)} className="text-ink/60" />
+          <>
+            <polyline fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round" points={toPoints(projected)} className="text-[#d8efe5]" />
+            <polyline fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" points={toPoints(projected)} className="text-[#0c7c59]" />
+            {projected.map((v, i) => {
+              const x = (i / (projected.length - 1)) * w;
+              const y = h - ((v - min) / range) * h;
+              return <circle key={`projected-${i}`} cx={x} cy={y} r="3.4" className="fill-[#0c7c59] stroke-white" strokeWidth="1.6" />;
+            })}
+          </>
         )}
       </svg>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-3 text-[11px] text-ink/55">
         <span className="inline-flex items-center gap-1.5"><span className="w-3 h-px bg-ink" /> Twój produkt</span>
         <span className="inline-flex items-center gap-1.5"><span className="w-3 h-px bg-ink/30" style={{ borderTop: "1px dashed" }} /> Średnia kategorii</span>
-        {projected && <span className="inline-flex items-center gap-1.5"><span className="w-3 h-px bg-ink/60" style={{ borderTop: "1px dashed" }} /> Projekcja po booście</span>}
+        {projected && <span className="inline-flex items-center gap-1.5 font-medium text-[#0c7c59]"><span className="w-4 h-[3px] bg-[#0c7c59]" /> Projekcja po booście</span>}
       </div>
     </div>
   );
@@ -357,9 +373,23 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
         <div className="text-ink">
           <TrendChart data={p.trend} categoryAvg={p.categoryAvg} projected={boosted ? p.projectedTrend : undefined} />
           {boosted && (
-            <p className="text-[12px] text-ink/60 mt-4 leading-relaxed">
-              Projekcja oparta na średnim wzroście wejść po booście w Twojej kategorii (+{Math.round(((p.projectedTrend[6] - p.trend[6]) / Math.max(1, p.trend[6])) * 100)}%). To symulacja na potrzeby testu, nie gwarancja wyniku.
-            </p>
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              <div className="bg-white border border-black/10 p-3">
+                <div className="text-[10px] tracking-[0.14em] uppercase text-ink/45">Wejścia</div>
+                <div className="font-display text-xl text-ink mt-1">{p.trend[p.trend.length - 1]} → {p.projectedTrend[p.projectedTrend.length - 1]}</div>
+              </div>
+              <div className="bg-white border border-black/10 p-3">
+                <div className="text-[10px] tracking-[0.14em] uppercase text-ink/45">Zamówienia</div>
+                <div className="font-display text-xl text-ink mt-1">{p.orders} → {p.projectedOrders}</div>
+              </div>
+              <div className="bg-white border border-black/10 p-3">
+                <div className="text-[10px] tracking-[0.14em] uppercase text-ink/45">Koszt testu</div>
+                <div className="font-display text-xl text-ink mt-1">50 PLN</div>
+              </div>
+              <p className="col-span-3 text-[12px] text-ink/55 leading-relaxed">
+                To prognoza testowa. Nie uruchomiliśmy jeszcze prawdziwej reklamy ani płatności.
+              </p>
+            </div>
           )}
         </div>
         <div>
@@ -375,35 +405,17 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
         </div>
       </div>
 
-      {p.fixes.length > 0 && (
-        <div className="py-8 border-b border-black/10">
-          <div className="flex items-center gap-2 mb-4">
-            <Wrench className="w-4 h-4 text-ink/60" />
-            <span className="text-[10px] tracking-[0.15em] uppercase text-ink/55">Popraw bez wydawania na reklamę</span>
-          </div>
-          <ul className="grid md:grid-cols-2 gap-3">
-            {p.fixes.map((f, i) => (
-              <li key={i} className="flex items-start gap-3 border border-black/10 p-4">
-                <span className="font-display text-ink/30 text-sm leading-none mt-1">{String(i + 1).padStart(2, "0")}</span>
-                <span className="text-sm text-ink/75 leading-relaxed">{f}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-[12px] text-ink/50 mt-4">Te zmiany są darmowe. Często dają większy efekt na konwersji niż dopłata do widoczności.</p>
-        </div>
-      )}
-
       <div className="pt-8">
         {boosted ? (
-          <div className="bg-beige-deep border border-ink/20 p-6">
+          <div className="bg-white border border-ink/20 p-5">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-ink text-white flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#0c7c59] text-white flex items-center justify-center shrink-0">
                 <Check className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-display text-lg text-ink">Zapisano sygnał testowy.</p>
+                <p className="font-display text-lg text-ink">Sygnał testowy zapisany.</p>
                 <p className="text-sm text-ink/65 mt-1">
-                  To nie uruchamia prawdziwej płatności ani reklamy. Twoja decyzja została zarejestrowana wyłącznie na potrzeby testu produktowego. Powyżej widzisz, jak mógłby wyglądać lejek po 48 h boosta.
+                  Nie uruchomiliśmy prawdziwej płatności ani reklamy. Powyżej pojawiła się symulacja lejka po booście.
                 </p>
               </div>
             </div>
