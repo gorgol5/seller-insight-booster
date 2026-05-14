@@ -62,9 +62,14 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
+  --radius: 0.125rem;
+  --background: oklch(0.965 0.018 85);
+  --foreground: oklch(0.15 0 0);
+  --beige: oklch(0.945 0.022 82);
+  --beige-deep: oklch(0.91 0.028 80);
+  --ink: oklch(0.12 0 0);
+  --font-display: "Times New Roman", "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
