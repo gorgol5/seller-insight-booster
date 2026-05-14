@@ -59,6 +59,11 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-ink: var(--ink);
+  --color-beige: var(--beige);
+  --color-beige-deep: var(--beige-deep);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
 }
 
 :root {
