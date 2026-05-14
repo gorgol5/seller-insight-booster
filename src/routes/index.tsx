@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target, AlertTriangle, Wrench } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 import hoodie from "@/assets/hoodie.jpg";
 import slipon from "@/assets/slipon.jpg";
@@ -37,7 +37,11 @@ type Product = {
   statusLabel: string;
   ctaActive: boolean;
   trend: number[];
+  categoryAvg: number[];
+  projectedTrend: number[];
+  projectedOrders: number;
   evidence: string[];
+  fixes: string[];
 };
 
 const products: Product[] = [
@@ -61,11 +65,20 @@ const products: Product[] = [
     statusLabel: "Słaba konwersja",
     ctaActive: true,
     trend: [3, 5, 4, 6, 8, 7, 9],
+    categoryAvg: [12, 14, 13, 15, 16, 15, 17],
+    projectedTrend: [9, 14, 22, 30, 36, 41, 45],
+    projectedOrders: 6,
     evidence: [
       "Niska liczba wejść przy 120 wyświetleniach — zdjęcie lub tytuł nie przyciągają kliknięcia.",
       "Cena 10 PLN powyżej benchmarku kategorii.",
       "Pozycja 38 w wyszukiwarce — produkt znika z pierwszej strony wyników.",
       "Boost odpowie na pytanie, czy problem jest w widoczności, czy w samej ofercie.",
+    ],
+    fixes: [
+      "Dodaj 2. zdjęcie produktu — najlepiej noszone na modelu, nie packshot.",
+      "Skróć tytuł do 60 znaków i przenieś kolor na koniec.",
+      "Obniż cenę o 10 PLN do poziomu benchmarku kategorii.",
+      "Uzupełnij tabelę rozmiarów — pomoże też w zwrotach.",
     ],
   },
   {
@@ -88,12 +101,16 @@ const products: Product[] = [
     statusLabel: "Dobry kandydat",
     ctaActive: true,
     trend: [40, 55, 62, 70, 88, 95, 110],
+    categoryAvg: [60, 62, 65, 68, 72, 75, 78],
+    projectedTrend: [110, 145, 180, 210, 240, 268, 295],
+    projectedOrders: 56,
     evidence: [
       "Stabilny lejek: 11% z wyświetleń wchodzi w kartę, 19% z wejść kupuje.",
       "Cena 10 PLN poniżej benchmarku — przewaga w wynikach wyszukiwania.",
       "Niski poziom zwrotów (8%) — boost nie podniesie kosztów obsługi.",
       "47 osób dodało do listy życzeń — rozgrzany popyt czeka na impuls.",
     ],
+    fixes: [],
   },
   {
     id: "black-strap-flats",
@@ -115,13 +132,29 @@ const products: Product[] = [
     statusLabel: "Nie promuj teraz",
     ctaActive: false,
     trend: [80, 75, 60, 55, 48, 40, 38],
+    categoryAvg: [70, 70, 68, 66, 64, 62, 60],
+    projectedTrend: [38, 42, 48, 54, 58, 62, 65],
+    projectedOrders: 14,
     evidence: [
       "Zwroty 31% — boost zwiększy koszty obsługi i stratę.",
       "Wynik po prowizji 34 PLN — mała marża na pokrycie reklamy.",
       "Stan magazynu 9 sztuk — promocja może wyczerpać zapas w 2 dni.",
       "Najpierw popraw opis rozmiarówki, potem rozważ boost.",
     ],
+    fixes: [
+      "Przepisz opis rozmiarówki — wskaż „dobierz rozmiar w górę".",
+      "Dodaj zdjęcie boczne stopy — pokaż realną szerokość.",
+      "Uzupełnij stan magazynu zanim rozważysz promocję.",
+    ],
   },
+];
+
+type Segment = "all" | "good" | "weak" | "bad";
+const segments: { id: Segment; label: string }[] = [
+  { id: "all", label: "Wszystkie" },
+  { id: "good", label: "Kandydaci do boosta" },
+  { id: "weak", label: "Do poprawy" },
+  { id: "bad", label: "Nie promuj teraz" },
 ];
 
 function Topbar() {
@@ -225,14 +258,15 @@ function ProductCard({ p, selected, onSelect }: { p: Product; selected: boolean;
   );
 }
 
-function TrendChart({ data }: { data: number[] }) {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
+function TrendChart({ data, categoryAvg, projected }: { data: number[]; categoryAvg: number[]; projected?: number[] }) {
+  const all = [...data, ...categoryAvg, ...(projected ?? [])];
+  const max = Math.max(...all);
+  const min = Math.min(...all);
   const range = Math.max(1, max - min);
   const w = 280;
   const h = 80;
-  const points = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
+  const toPoints = (arr: number[]) => arr.map((v, i) => {
+    const x = (i / (arr.length - 1)) * w;
     const y = h - ((v - min) / range) * h;
     return `${x},${y}`;
   }).join(" ");
@@ -247,13 +281,22 @@ function TrendChart({ data }: { data: number[] }) {
         </span>
       </div>
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-20">
-        <polyline fill="none" stroke="currentColor" strokeWidth="1.5" points={points} className="text-ink" />
+        <polyline fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" points={toPoints(categoryAvg)} className="text-ink/30" />
+        <polyline fill="none" stroke="currentColor" strokeWidth="1.5" points={toPoints(data)} className="text-ink" />
         {data.map((v, i) => {
           const x = (i / (data.length - 1)) * w;
           const y = h - ((v - min) / range) * h;
           return <circle key={i} cx={x} cy={y} r="2" className="fill-ink" />;
         })}
+        {projected && (
+          <polyline fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 3" points={toPoints(projected)} className="text-ink/60" />
+        )}
       </svg>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-3 text-[11px] text-ink/55">
+        <span className="inline-flex items-center gap-1.5"><span className="w-3 h-px bg-ink" /> Twój produkt</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-3 h-px bg-ink/30" style={{ borderTop: "1px dashed" }} /> Średnia kategorii</span>
+        {projected && <span className="inline-flex items-center gap-1.5"><span className="w-3 h-px bg-ink/60" style={{ borderTop: "1px dashed" }} /> Projekcja po booście</span>}
+      </div>
     </div>
   );
 }
@@ -277,6 +320,7 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
   const ctr = ((p.visits / p.views) * 100).toFixed(1);
   const conv = p.visits > 0 ? ((p.orders / p.visits) * 100).toFixed(1) : "0.0";
   const revenue = p.orders * p.netResult;
+  const stockRisk = p.ctaActive && p.projectedOrders > p.stock;
 
   return (
     <div className="bg-white p-8 lg:p-10 border border-black/10">
@@ -288,6 +332,15 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
         </div>
         <span className={`text-[10px] tracking-[0.1em] uppercase px-3 py-1.5 ${statusStyles[p.status]}`}>{p.statusLabel}</span>
       </div>
+
+      {stockRisk && (
+        <div className="flex items-start gap-3 border border-ink/30 bg-beige-deep px-5 py-4 mb-8">
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-ink" />
+          <div className="text-sm text-ink/80">
+            <span className="font-medium text-ink">Uwaga: ryzyko wyczerpania zapasu.</span> Projekcja boosta to ok. <strong>{p.projectedOrders} zamówień</strong> w 7 dni, a w magazynie masz <strong>{p.stock} szt.</strong> Uzupełnij stan lub ogranicz budżet, żeby reklama nie pracowała w próżnię.
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pb-8 border-b border-black/10">
         <MetricTile icon={Eye} label="Wyświetlenia" value={p.views.toString()} hint="ostatnie 7 dni" />
@@ -302,7 +355,12 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
 
       <div className="grid lg:grid-cols-2 gap-10 py-8 border-b border-black/10">
         <div className="text-ink">
-          <TrendChart data={p.trend} />
+          <TrendChart data={p.trend} categoryAvg={p.categoryAvg} projected={boosted ? p.projectedTrend : undefined} />
+          {boosted && (
+            <p className="text-[12px] text-ink/60 mt-4 leading-relaxed">
+              Projekcja oparta na średnim wzroście wejść po booście w Twojej kategorii (+{Math.round(((p.projectedTrend[6] - p.trend[6]) / Math.max(1, p.trend[6])) * 100)}%). To symulacja na potrzeby testu, nie gwarancja wyniku.
+            </p>
+          )}
         </div>
         <div>
           <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50 mb-3">Co mówią dane</div>
@@ -317,6 +375,24 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
         </div>
       </div>
 
+      {p.fixes.length > 0 && (
+        <div className="py-8 border-b border-black/10">
+          <div className="flex items-center gap-2 mb-4">
+            <Wrench className="w-4 h-4 text-ink/60" />
+            <span className="text-[10px] tracking-[0.15em] uppercase text-ink/55">Popraw bez wydawania na reklamę</span>
+          </div>
+          <ul className="grid md:grid-cols-2 gap-3">
+            {p.fixes.map((f, i) => (
+              <li key={i} className="flex items-start gap-3 border border-black/10 p-4">
+                <span className="font-display text-ink/30 text-sm leading-none mt-1">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-sm text-ink/75 leading-relaxed">{f}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[12px] text-ink/50 mt-4">Te zmiany są darmowe. Często dają większy efekt na konwersji niż dopłata do widoczności.</p>
+        </div>
+      )}
+
       <div className="pt-8">
         {boosted ? (
           <div className="bg-beige-deep border border-ink/20 p-6">
@@ -327,7 +403,7 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
               <div>
                 <p className="font-display text-lg text-ink">Zapisano sygnał testowy.</p>
                 <p className="text-sm text-ink/65 mt-1">
-                  To nie uruchamia prawdziwej płatności ani reklamy. Twoja decyzja została zarejestrowana wyłącznie na potrzeby testu produktowego.
+                  To nie uruchamia prawdziwej płatności ani reklamy. Twoja decyzja została zarejestrowana wyłącznie na potrzeby testu produktowego. Powyżej widzisz, jak mógłby wyglądać lejek po 48 h boosta.
                 </p>
               </div>
             </div>
@@ -415,7 +491,13 @@ function HowItWorks() {
 function Index() {
   const [selectedId, setSelectedId] = useState<string>(products[1].id);
   const [boostedIds, setBoostedIds] = useState<Set<string>>(new Set());
+  const [segment, setSegment] = useState<Segment>("all");
   const selected = products.find((p) => p.id === selectedId)!;
+
+  const filtered = useMemo(
+    () => (segment === "all" ? products : products.filter((p) => p.status === segment)),
+    [segment],
+  );
 
   const handleBoost = () => {
     setBoostedIds((prev) => new Set(prev).add(selectedId));
@@ -436,7 +518,7 @@ function Index() {
 
       <section id="insights" className="bg-background py-20 lg:py-28">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
-          <div className="flex items-end justify-between mb-12 flex-wrap gap-4">
+          <div className="flex items-end justify-between mb-10 flex-wrap gap-4">
             <div>
               <p className="text-[11px] tracking-[0.2em] uppercase text-ink/50 mb-3">Growth Insights</p>
               <h2 className="font-display text-4xl lg:text-5xl text-ink leading-tight">Twoje produkty w tym tygodniu</h2>
@@ -444,11 +526,33 @@ function Index() {
             <p className="text-sm text-ink/55 max-w-xs">Klikaj produkty, aby zobaczyć szczegóły i decyzję, którą rekomendujemy.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((p) => (
-              <ProductCard key={p.id} p={p} selected={p.id === selectedId} onSelect={() => handleSelect(p.id)} />
-            ))}
+          <div className="flex flex-wrap items-center gap-2 mb-8 border-b border-black/10 pb-4">
+            {segments.map((s) => {
+              const count = s.id === "all" ? products.length : products.filter((p) => p.status === s.id).length;
+              const active = segment === s.id;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setSegment(s.id)}
+                  className={`text-[11px] tracking-[0.15em] uppercase px-4 py-2 transition-colors ${
+                    active ? "bg-ink text-white" : "text-ink/60 hover:text-ink"
+                  }`}
+                >
+                  {s.label} <span className={active ? "text-white/60" : "text-ink/40"}>({count})</span>
+                </button>
+              );
+            })}
           </div>
+
+          {filtered.length === 0 ? (
+            <p className="text-sm text-ink/55 py-12">Brak produktów w tym segmencie w tym tygodniu.</p>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((p) => (
+                <ProductCard key={p.id} p={p} selected={p.id === selectedId} onSelect={() => handleSelect(p.id)} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
