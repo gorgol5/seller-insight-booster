@@ -579,12 +579,29 @@ function Index() {
     [segment],
   );
 
+  useEffect(() => {
+    track("growth_insights_viewed", {
+      seller_type: SELLER_TYPE,
+      variant: VARIANT,
+    });
+  }, []);
+
   const handleBoost = () => {
     setBoostedIds((prev) => new Set(prev).add(selectedId));
   };
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
+    const p = products.find((x) => x.id === id);
+    if (p) {
+      track("product_row_opened", {
+        product_id: p.id,
+        product_name: p.name,
+        recommendation_status: statusToRecommendation[p.status],
+        seller_type: SELLER_TYPE,
+        variant: VARIANT,
+      });
+    }
     setTimeout(() => {
       document.getElementById("details")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
