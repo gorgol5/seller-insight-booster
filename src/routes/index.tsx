@@ -11,11 +11,6 @@ const SELLER_TYPE = "fashion_marketplace_seller";
 const VARIANT = "growth_insights_v1";
 
 type RecommendationStatus = "Promuj teraz" | "Popraw listing" | "Popraw cenę";
-const statusToRecommendation: Record<Status, RecommendationStatus> = {
-  good: "Promuj teraz",
-  weak: "Popraw listing",
-  bad: "Popraw cenę",
-};
 
 export const Route = createFileRoute("/")({
   component: Index,
