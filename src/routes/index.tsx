@@ -1,10 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target, AlertTriangle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target, AlertTriangle, ChevronDown } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 import hoodie from "@/assets/hoodie.jpg";
 import slipon from "@/assets/slipon.jpg";
 import flats from "@/assets/flats.jpg";
+import { track } from "@/lib/posthog";
+
+const SELLER_TYPE = "fashion_marketplace_seller";
+const VARIANT = "growth_insights_v1";
+
+type RecommendationStatus = "Promuj teraz" | "Popraw listing" | "Popraw cenę";
+const statusToRecommendation: Record<Status, RecommendationStatus> = {
+  good: "Promuj teraz",
+  weak: "Popraw listing",
+  bad: "Popraw cenę",
+};
 
 export const Route = createFileRoute("/")({
   component: Index,
