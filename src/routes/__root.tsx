@@ -115,9 +115,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  if (typeof window !== "undefined") {
+    import("@/lib/posthog").then(({ initPostHog }) => initPostHog());
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
     </QueryClientProvider>
   );
 }
+
