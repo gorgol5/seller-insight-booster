@@ -7,6 +7,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { initPostHog, posthog } from "@/lib/posthog";
 
 import appCss from "../styles.css?url";
 
