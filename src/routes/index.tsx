@@ -23,6 +23,19 @@ export const Route = createFileRoute("/")({
 });
 
 type Status = "good" | "weak" | "bad";
+
+const statusToRecommendation: Record<Status, RecommendationStatus> = {
+  good: "Promuj teraz",
+  weak: "Popraw listing",
+  bad: "Popraw cenę",
+};
+
+const altCtaLabel: Record<Status, string> = {
+  good: "Uruchom test boosta za 50 PLN",
+  weak: "Popraw listing",
+  bad: "Popraw cenę",
+};
+
 type Product = {
   id: string;
   name: string;
