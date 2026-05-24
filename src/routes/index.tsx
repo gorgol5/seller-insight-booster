@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target, AlertTriangle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Heart, User, ShoppingBag, TrendingUp, TrendingDown, Minus, Check, Eye, MousePointerClick, ShoppingCart, RotateCcw, Tag, Wallet, Package, Target, AlertTriangle, ChevronDown } from "lucide-react";
 import hero from "@/assets/hero.jpg";
 import hoodie from "@/assets/hoodie.jpg";
 import slipon from "@/assets/slipon.jpg";
 import flats from "@/assets/flats.jpg";
+import { track } from "@/lib/posthog";
+
+const SELLER_TYPE = "fashion_marketplace_seller";
+const VARIANT = "growth_insights_v1";
+
+type RecommendationStatus = "Promuj teraz" | "Popraw listing" | "Popraw cenę";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -17,6 +23,19 @@ export const Route = createFileRoute("/")({
 });
 
 type Status = "good" | "weak" | "bad";
+
+const statusToRecommendation: Record<Status, RecommendationStatus> = {
+  good: "Promuj teraz",
+  weak: "Popraw listing",
+  bad: "Popraw cenę",
+};
+
+const altCtaLabel: Record<Status, string> = {
+  good: "Uruchom test boosta za 50 PLN",
+  weak: "Popraw listing",
+  bad: "Popraw cenę",
+};
+
 type Product = {
   id: string;
   name: string;
@@ -63,7 +82,7 @@ const products: Product[] = [
     wishlist: 3,
     status: "weak",
     statusLabel: "Słaba konwersja",
-    ctaActive: true,
+    ctaActive: false,
     trend: [3, 5, 4, 6, 8, 7, 9],
     categoryAvg: [12, 14, 13, 15, 16, 15, 17],
     projectedTrend: [9, 14, 22, 30, 36, 41, 45],
@@ -337,6 +356,38 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
   const conv = p.visits > 0 ? ((p.orders / p.visits) * 100).toFixed(1) : "0.0";
   const revenue = p.orders * p.netResult;
   const stockRisk = p.ctaActive && p.projectedOrders > p.stock;
+  const recommendation = statusToRecommendation[p.status];
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+
+  const baseProps = {
+    product_id: p.id,
+    product_name: p.name,
+    recommendation_status: recommendation,
+    seller_type: SELLER_TYPE,
+    variant: VARIANT,
+  };
+
+  const toggleEvidence = (i: number, text: string) => {
+    const next = expandedIdx === i ? null : i;
+    setExpandedIdx(next);
+    if (next !== null) {
+      const reasonType =
+        /cena|benchmark|PLN/i.test(text) ? "price"
+        : /zwro/i.test(text) ? "returns"
+        : /magazyn|zapas/i.test(text) ? "stock"
+        : /wyszuk|pozycj/i.test(text) ? "search_rank"
+        : /wishlist|życze/i.test(text) ? "wishlist"
+        : /konwers|wejść|wejści|CTR|lejek/i.test(text) ? "funnel"
+        : "other";
+      track("recommendation_explained", { ...baseProps, reason_type: reasonType });
+    }
+  };
+
+  const handleBoostClick = () => {
+    if (!p.ctaActive) return;
+    track("boost_test_clicked", { ...baseProps, price_point: 50 });
+    onBoost();
+  };
 
   return (
     <div className="bg-white p-8 lg:p-10 border border-black/10">
@@ -346,7 +397,7 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
           <h3 className="font-display text-3xl text-ink mt-1">{p.name}</h3>
           <p className="text-sm text-ink/55">{p.seller}</p>
         </div>
-        <span className={`text-[10px] tracking-[0.1em] uppercase px-3 py-1.5 ${statusStyles[p.status]}`}>{p.statusLabel}</span>
+        <span className={`text-[10px] tracking-[0.1em] uppercase px-3 py-1.5 ${statusStyles[p.status]}`}>{recommendation}</span>
       </div>
 
       {stockRisk && (
@@ -393,14 +444,29 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
           )}
         </div>
         <div>
-          <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50 mb-3">Co mówią dane</div>
-          <ul className="space-y-2.5">
-            {p.evidence.map((e, i) => (
-              <li key={i} className="flex gap-3 text-sm text-ink/75 leading-relaxed">
-                <Minus className="w-4 h-4 mt-0.5 shrink-0 text-ink/40" />
-                <span>{e}</span>
-              </li>
-            ))}
+          <div className="text-[10px] tracking-[0.15em] uppercase text-ink/50 mb-3">Co mówią dane — kliknij, aby rozwinąć uzasadnienie</div>
+          <ul className="space-y-2">
+            {p.evidence.map((e, i) => {
+              const open = expandedIdx === i;
+              return (
+                <li key={i} className="border border-black/10">
+                  <button
+                    onClick={() => toggleEvidence(i, e)}
+                    className="w-full flex items-start gap-3 text-left px-3 py-2.5 hover:bg-beige-deep/40 transition-colors"
+                    aria-expanded={open}
+                  >
+                    <ChevronDown className={`w-4 h-4 mt-0.5 shrink-0 text-ink/50 transition-transform ${open ? "rotate-180" : ""}`} />
+                    <span className="text-sm text-ink/80 leading-relaxed">{e}</span>
+                  </button>
+                  {open && p.fixes.length > 0 && (
+                    <div className="px-3 pb-3 pt-1 text-[12px] text-ink/65 leading-relaxed border-t border-black/5 bg-beige-deep/30">
+                      <span className="block text-[10px] tracking-[0.14em] uppercase text-ink/45 mb-1">Co możesz zrobić</span>
+                      {p.fixes[i % p.fixes.length]}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
@@ -413,9 +479,9 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
                 <Check className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-display text-lg text-ink">Sygnał testowy zapisany.</p>
+                <p className="font-display text-lg text-ink">To był test zainteresowania.</p>
                 <p className="text-sm text-ink/65 mt-1">
-                  Nie uruchomiliśmy prawdziwej płatności ani reklamy. Powyżej pojawiła się symulacja lejka po booście.
+                  Prawdziwa płatność nie została uruchomiona. Powyżej pojawiła się symulacja lejka po booście.
                 </p>
               </div>
             </div>
@@ -423,23 +489,25 @@ function Details({ p, onBoost, boosted }: { p: Product; onBoost: () => void; boo
         ) : (
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-[11px] tracking-[0.2em] uppercase text-ink/50">Test boosta</p>
+              <p className="text-[11px] tracking-[0.2em] uppercase text-ink/50">
+                {p.ctaActive ? "Test boosta" : `Rekomendacja: ${recommendation}`}
+              </p>
               <p className="text-sm text-ink/70 mt-1">
                 {p.ctaActive
-                  ? "Mały płatny test, aby sprawdzić czy boost zmienia lejek tego produktu."
-                  : "Ten produkt nie jest dobrym kandydatem do promocji w tym tygodniu."}
+                  ? "Mały płatny test, aby sprawdzić czy boost zmienia lejek tego produktu. To prototyp — bez prawdziwej płatności."
+                  : "Boost nie zadziała, dopóki nie poprawisz fundamentów oferty. Zacznij od działań poniżej."}
               </p>
             </div>
             <button
-              onClick={onBoost}
+              onClick={handleBoostClick}
               disabled={!p.ctaActive}
               className={`text-[12px] tracking-[0.15em] uppercase px-7 py-4 transition-colors ${
                 p.ctaActive
                   ? "bg-ink text-white hover:bg-ink/85"
-                  : "bg-transparent text-ink/40 border border-ink/20 cursor-not-allowed"
+                  : "bg-white text-ink border border-ink hover:bg-ink hover:text-white"
               }`}
             >
-              Uruchom test boosta za 50 PLN
+              {p.ctaActive ? "Uruchom test boosta za 50 PLN" : altCtaLabel[p.status]}
             </button>
           </div>
         )}
@@ -511,12 +579,29 @@ function Index() {
     [segment],
   );
 
+  useEffect(() => {
+    track("growth_insights_viewed", {
+      seller_type: SELLER_TYPE,
+      variant: VARIANT,
+    });
+  }, []);
+
   const handleBoost = () => {
     setBoostedIds((prev) => new Set(prev).add(selectedId));
   };
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
+    const p = products.find((x) => x.id === id);
+    if (p) {
+      track("product_row_opened", {
+        product_id: p.id,
+        product_name: p.name,
+        recommendation_status: statusToRecommendation[p.status],
+        seller_type: SELLER_TYPE,
+        variant: VARIANT,
+      });
+    }
     setTimeout(() => {
       document.getElementById("details")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
