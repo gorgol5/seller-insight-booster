@@ -82,7 +82,7 @@ const products: Product[] = [
     wishlist: 3,
     status: "weak",
     statusLabel: "Słaba konwersja",
-    ctaActive: true,
+    ctaActive: false,
     trend: [3, 5, 4, 6, 8, 7, 9],
     categoryAvg: [12, 14, 13, 15, 16, 15, 17],
     projectedTrend: [9, 14, 22, 30, 36, 41, 45],
