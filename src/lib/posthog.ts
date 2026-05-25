@@ -4,11 +4,17 @@ let initialized = false;
 
 const FALLBACK_KEY = "phc_npxG9TEEPkf5oYBjsgs8CRpFjJjBhQUaptKuVAQULaBd";
 const FALLBACK_HOST = "https://us.i.posthog.com";
+const DEFAULT_ENV_HOST = "https://eu.i.posthog.com";
 
-export const POSTHOG_KEY =
-  (import.meta.env.VITE_POSTHOG_KEY as string | undefined) ?? FALLBACK_KEY;
-export const POSTHOG_HOST =
-  (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ?? FALLBACK_HOST;
+const envKey =
+  (import.meta.env.VITE_PUBLIC_POSTHOG_KEY as string | undefined) ??
+  (import.meta.env.VITE_POSTHOG_KEY as string | undefined);
+const envHost =
+  (import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string | undefined) ??
+  (import.meta.env.VITE_POSTHOG_HOST as string | undefined);
+
+export const POSTHOG_KEY = envKey ?? FALLBACK_KEY;
+export const POSTHOG_HOST = envHost ?? (envKey ? DEFAULT_ENV_HOST : FALLBACK_HOST);
 
 export const IS_DEV =
   import.meta.env.DEV ||
@@ -20,10 +26,12 @@ export function initPostHog() {
   initialized = true;
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
+    defaults: "2026-01-30",
     person_profiles: "identified_only",
-    capture_pageview: true,
+    capture_pageview: false,
     capture_pageleave: true,
     autocapture: true,
+    disable_session_recording: true,
     loaded: (ph) => {
       if (IS_DEV) {
         ph.debug();
@@ -31,6 +39,14 @@ export function initPostHog() {
         console.info("[PostHog] initialized", { host: POSTHOG_HOST, key: POSTHOG_KEY.slice(0, 10) + "…" });
       }
     },
+  });
+}
+
+export function capturePageview(path: string) {
+  if (typeof window === "undefined") return;
+  track("$pageview", {
+    $current_url: window.location.href,
+    path,
   });
 }
 

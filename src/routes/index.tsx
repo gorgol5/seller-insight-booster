@@ -607,6 +607,17 @@ function Index() {
     }, 50);
   };
 
+  const handleSegmentChange = (nextSegment: Segment) => {
+    track("insights_segment_changed", {
+      segment: nextSegment,
+      visible_products:
+        nextSegment === "all" ? products.length : products.filter((p) => p.status === nextSegment).length,
+      seller_type: SELLER_TYPE,
+      variant: VARIANT,
+    });
+    setSegment(nextSegment);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Topbar />
@@ -630,7 +641,7 @@ function Index() {
               return (
                 <button
                   key={s.id}
-                  onClick={() => setSegment(s.id)}
+                  onClick={() => handleSegmentChange(s.id)}
                   className={`text-[11px] tracking-[0.15em] uppercase px-4 py-2 transition-colors ${
                     active ? "bg-ink text-white" : "text-ink/60 hover:text-ink"
                   }`}

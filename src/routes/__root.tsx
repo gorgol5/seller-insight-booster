@@ -4,15 +4,12 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { initPostHog, posthog } from "@/lib/posthog";
-
-if (typeof window !== "undefined") {
-  initPostHog();
-}
+import { capturePageview, initPostHog } from "@/lib/posthog";
 
 import appCss from "../styles.css?url";
 
@@ -120,20 +117,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const router = useRouter();
+  const location = useLocation();
 
   useEffect(() => {
     initPostHog();
   }, []);
 
   useEffect(() => {
-    const unsub = router.subscribe("onResolved", () => {
-      if (typeof window !== "undefined") {
-        posthog.capture("$pageview", { $current_url: window.location.href });
-      }
-    });
-    return () => unsub();
-  }, [router]);
+    capturePageview(`${location.pathname}${location.searchStr}${window.location.hash}`);
+  }, [location.pathname, location.searchStr]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -141,4 +133,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-
