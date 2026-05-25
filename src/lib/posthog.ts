@@ -1,8 +1,11 @@
 import posthog from "posthog-js";
 
+const PROJECT_POSTHOG_TOKEN = "phc_npxG9TEEPkf5oYBjsgs8CRpFjJjBhQUaptKuVAQULaBd";
+
 const POSTHOG_TOKEN =
   (import.meta.env.VITE_PUBLIC_POSTHOG_KEY as string | undefined) ??
-  (import.meta.env.VITE_POSTHOG_KEY as string | undefined);
+  (import.meta.env.VITE_POSTHOG_KEY as string | undefined) ??
+  PROJECT_POSTHOG_TOKEN;
 
 export const POSTHOG_HOST =
   (import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string | undefined) ??
