@@ -136,11 +136,9 @@ function RootComponent() {
   }, [router]);
 
   return (
-    <PostHogProvider client={posthog}>
-      <QueryClientProvider client={queryClient}>
-        <Outlet />
-      </QueryClientProvider>
-    </PostHogProvider>
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+    </QueryClientProvider>
   );
 }
 
