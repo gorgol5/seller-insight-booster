@@ -3,7 +3,7 @@ import posthog from "posthog-js";
 let initialized = false;
 
 const FALLBACK_KEY = "phc_npxG9TEEPkf5oYBjsgs8CRpFjJjBhQUaptKuVAQULaBd";
-const FALLBACK_HOST = "https://eu.i.posthog.com";
+const FALLBACK_HOST = "https://us.i.posthog.com";
 
 export const POSTHOG_KEY =
   (import.meta.env.VITE_POSTHOG_KEY as string | undefined) ?? FALLBACK_KEY;
