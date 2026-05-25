@@ -10,7 +10,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { capturePageview, IS_POSTHOG_CONFIGURED, posthog } from "@/lib/posthog";
+import { captureAutocapture, capturePageview, IS_POSTHOG_CONFIGURED, posthog } from "@/lib/posthog";
 
 import appCss from "../styles.css?url";
 
@@ -121,6 +121,7 @@ function RootComponent() {
   const app = (
     <>
       <PostHogPageviewTracker />
+      <PostHogAutocaptureFallback />
       <Outlet />
     </>
   );
@@ -150,6 +151,23 @@ function PostHogPageviewTracker() {
     window.addEventListener("hashchange", captureCurrentUrl);
     return () => window.removeEventListener("hashchange", captureCurrentUrl);
   }, [location.pathname, location.searchStr]);
+
+  return null;
+}
+
+function PostHogAutocaptureFallback() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest("button, a, [role='button']") : null;
+      if (!target) return;
+      captureAutocapture(target);
+    };
+
+    document.addEventListener("click", handleClick, { capture: true });
+    return () => document.removeEventListener("click", handleClick, { capture: true });
+  }, []);
 
   return null;
 }
