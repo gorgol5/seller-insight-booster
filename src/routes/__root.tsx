@@ -8,7 +8,6 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { PostHogProvider } from "posthog-js/react";
 import { initPostHog, posthog } from "@/lib/posthog";
 
 if (typeof window !== "undefined") {
@@ -137,11 +136,9 @@ function RootComponent() {
   }, [router]);
 
   return (
-    <PostHogProvider client={posthog}>
-      <QueryClientProvider client={queryClient}>
-        <Outlet />
-      </QueryClientProvider>
-    </PostHogProvider>
+    <QueryClientProvider client={queryClient}>
+      <Outlet />
+    </QueryClientProvider>
   );
 }
 
