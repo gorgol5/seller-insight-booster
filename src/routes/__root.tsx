@@ -5,10 +5,12 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { IS_POSTHOG_CONFIGURED, posthog } from "@/lib/posthog";
+import { useEffect, useRef } from "react";
+import { capturePageview, IS_POSTHOG_CONFIGURED, posthog } from "@/lib/posthog";
 
 import appCss from "../styles.css?url";
 
@@ -116,11 +118,38 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const app = <Outlet />;
+  const app = (
+    <>
+      <PostHogPageviewTracker />
+      <Outlet />
+    </>
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
       {IS_POSTHOG_CONFIGURED ? <PostHogProvider client={posthog}>{app}</PostHogProvider> : app}
     </QueryClientProvider>
   );
+}
+
+function PostHogPageviewTracker() {
+  const location = useLocation();
+  const lastCapturedUrl = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const captureCurrentUrl = () => {
+      const url = window.location.href;
+      if (lastCapturedUrl.current === url) return;
+      lastCapturedUrl.current = url;
+      capturePageview();
+    };
+
+    captureCurrentUrl();
+    window.addEventListener("hashchange", captureCurrentUrl);
+    return () => window.removeEventListener("hashchange", captureCurrentUrl);
+  }, [location.pathname, location.searchStr]);
+
+  return null;
 }

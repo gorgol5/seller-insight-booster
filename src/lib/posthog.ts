@@ -33,4 +33,15 @@ export function track(event: string, properties: Record<string, unknown> = {}) {
   });
 }
 
+export function capturePageview(properties: Record<string, unknown> = {}) {
+  if (typeof window === "undefined" || !POSTHOG_TOKEN) return;
+
+  posthog.capture("$pageview", {
+    $current_url: window.location.href,
+    page_url: window.location.href,
+    path: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+    ...properties,
+  });
+}
+
 export { posthog };
